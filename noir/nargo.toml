@@ -1,0 +1,7 @@
+[package]
+name = "mimir_poseidon2_interop"
+type = "lib"
+authors = ["Ian Elliott"]
+compiler_version = ">=1.0.0"
+
+[dependencies]
