@@ -5,18 +5,18 @@ pub global DOMAIN_NOTE_COMMITMENT: Field = 2;
 pub global DOMAIN_NULLIFIER: Field = 3;
 pub global DOMAIN_ADDRESS_SALT: Field = 4;
 
-// Raw Poseidon2 Permutation (t=4,t=8) wrapper around noir's native poseidon2 implementation
+// Raw Poseidon2 Permutation (t=4) wrapper around noir's native poseidon2 implementation
 fn permute_3(state: [Field; 4]) -> [Field; 4] {
     std::hash::poseidon2_permutation(state)
 }
 
-// Domain - Seperated hash for fixed length inputs (3 inputs -> t4)
+// Domain-separated hash for fixed length inputs (3 inputs -> t4)
 fn hash_3(domain: Field, a: Field, b: Field) -> Field {
     let state = [domain, a, b, 0];
     permute_3(state)[0]
 }
 
-// Domain Seperated hash for 5 fixed length inputs (5 inputs -> t8)
+// Domain-separated hash for 5 fixed length inputs (5 inputs -> t8)
 fn hash_5(domain: Field, a: Field, b: Field, c: Field, d: Field, e: Field) -> Field {
     let h1 = std::hash::poseidon2_permutation([domain, a, b, c])[0];
     let h2 = std::hash::poseidon2_permutation([h1, d, e, 0])[0];
@@ -45,45 +45,62 @@ pub fn hash_address_salt(sk: Field, salt: Field) -> Field {
     hash_3(DOMAIN_ADDRESS_SALT, sk, salt)
 }
 
-
-
-
-// tests 
+// === Tests ===
 
 #[test]
 fn test_hash_merkle_basic() {
-    let left: Field = Field::from(1u64);
-    let right: Field = Field::from(2u64);
-    let result = hash_merkle_node(left, right);
-    let expected_merkle: Field = 0x2026fba1cf8735645e309b155c86299f3ee23c495e9e94dad868dddb80907730;
-    let zero = Field::from(0u64);
-    assert(result != zero);
-    assert(result == expected_merkle);
-    println(f"Merkle Node Hash: {result}");
-    
+    let result = hash_merkle_node(1, 2);
+    let expected: Field = 0x2026fba1cf8735645e309b155c86299f3ee23c495e9e94dad868dddb80907730;
+    assert(result == expected);
+}
+
+#[test]
+fn test_hash_merkle_zeros() {
+    let result = hash_merkle_node(0, 0);
+    let expected: Field = 0x18dfb8dc9b82229cff974efefc8df78b1ce96d9d844236b496785c698bc6732e;
+    assert(result == expected);
 }
 
 #[test]
 fn test_hash_smt_leaf_basic() {
-    let key: Field = Field::from(3u64);
-    let value: Field = Field::from(4u64);
-    let result = hash_smt_leaf(key, value);
-    let expected_smt_leaf: Field = 0x2b2b0bb3946ec98c2d59ae87c4da6cfbb7f3e779a9ca3853650ba0edbd4d9b06; // Rust result in hex form.
-    let zero = Field::from(0u64);
-    assert(result != zero);
-    assert(result == expected_smt_leaf);
+    let result = hash_smt_leaf(3, 4);
+    let expected: Field = 0x2b2b0bb3946ec98c2d59ae87c4da6cfbb7f3e779a9ca3853650ba0edbd4d9b06;
+    assert(result == expected);
 }
 
 #[test]
 fn test_hash_note_commitment_basic() {
-    let sk: Field = Field::from(5u64);
-    let r: Field = Field::from(6u64);
-    let v: Field = Field::from(7u64);
-    let token: Field = Field::from(8u64);
-    let chain_id: Field = Field::from(9u64);
-    let result = hash_note_commitment(sk, r, v, token, chain_id);
-    let expected_note_commitment: Field = 0x22e8f91c0b715e9304767df11f256bd18ed79ff0a3a688f5a03d29b5f549ed2c; // Rust result in hex form.
-    let zero = Field::from(0u64);
-    assert(result != zero);
-    assert(result == expected_note_commitment);
+    let result = hash_note_commitment(5, 6, 7, 8, 9);
+    let expected: Field = 0x22e8f91c0b715e9304767df11f256bd18ed79ff0a3a688f5a03d29b5f549ed2c;
+    assert(result == expected);
+}
+
+#[test]
+fn test_hash_nullifier_basic() {
+    let result = hash_nullifier(42, 100);
+    let expected: Field = 0x298d157938c75d615c29e3f0ec72822ce450611debaa570c2fdd1bbbf0de396c;
+    assert(result == expected);
+}
+
+#[test]
+fn test_hash_address_salt_basic() {
+    let result = hash_address_salt(123, 456);
+    let expected: Field = 0x07ad23c3e4bc358ec44c744573deec09bb7189282993591e709ef0ab6bc7e801;
+    assert(result == expected);
+}
+
+#[test]
+fn test_domain_separation() {
+    let a: Field = 1;
+    let b: Field = 2;
+    let merkle = hash_merkle_node(a, b);
+    let leaf = hash_smt_leaf(a, b);
+    let nullifier = hash_nullifier(a, b);
+    let address = hash_address_salt(a, b);
+    assert(merkle != leaf);
+    assert(merkle != nullifier);
+    assert(merkle != address);
+    assert(leaf != nullifier);
+    assert(leaf != address);
+    assert(nullifier != address);
 }

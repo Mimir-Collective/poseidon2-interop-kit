@@ -71,3 +71,4 @@ pub fn bytes_to_field(bytes: &[u8; 32])->Result<Fr, InteropError> {
     Ok(val)
     
 }
+

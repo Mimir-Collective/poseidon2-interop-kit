@@ -1,0 +1,9 @@
+[
+  {
+    "name": "address_salt_basic",
+    "function": "hash_address_salt",
+    "domain": "ADDRESS_SALT",
+    "inputs": ["0x000000000000000000000000000000000000000000000000000000000000007b", "0x00000000000000000000000000000000000000000000000000000000000001c8"],
+    "expected_output": "0x07ad23c3e4bc358ec44c744573deec09bb7189282993591e709ef0ab6bc7e801"
+  }
+]
